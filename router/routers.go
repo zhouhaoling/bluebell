@@ -19,20 +19,34 @@ func SetUpRoutes() *gin.Engine {
 	r := gin.New()
 	r.Use(logger.GinLogger(), logger.GinRecovery(true))
 
-	v1 := r.Group("/api/v1")
-	//登录
-	v1.POST("/login", controller.LoginHandler)
-	//注册
-	v1.POST("/signup", controller.SignUpHandler)
+	v1 := r.Group("/bluebell/v1")
+	//登录和注册业务
+	v1.POST("/login", controller.UserLoginHandler)
+	v1.POST("/signup", controller.UserSignUpHandler)
+	v1.GET("/refresh/token", controller.RefreshTokenHandler) //刷新token
+
+	//帖子业务
+	v1.GET("/post/:id", controller.GetPostDetailHandler)
+	v1.GET("/posts", controller.GetPostListHandler)
+	v1.GET("/posts2", controller.GetPostListHandler2)
+
+	//社区业务
+	v1.GET("/community", controller.CommunityHandler)
+	v1.GET("community/:id", controller.CommunityDetailHandler)
+	//Github热榜
+
+	//中间件
 	v1.Use(middlewares.JWTAuthMiddleware())
-
 	{
-		v1.GET("/community", controller.CommunityHandler)
-		v1.GET("community/:id", controller.CommunityDetailHandler)
+		//创建帖子
+		v1.POST("/post/create", controller.CreatePostHandler)
 
-		v1.POST("/post", controller.CreatePostHandler)
-		v1.GET("/post/:id", controller.GetPostDetailHandler)
-		v1.GET("/posts/", controller.GetPostListHandler)
+		//投票功能
+		v1.POST("/vote", controller.PostVoteHandler)
+
+		v1.GET("/ping", func(c *gin.Context) {
+			c.String(http.StatusOK, "ok")
+		})
 	}
 
 	r.NoRoute(func(c *gin.Context) {

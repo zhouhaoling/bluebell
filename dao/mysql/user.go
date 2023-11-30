@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -37,19 +38,19 @@ func CheckUserExist(username string) (err error) {
 }
 
 // UserLogin 用户登录
-func UserLogin(username string, password string) (user *models.User, err error) {
-	result := db.Where("username = ?", username).First(&user)
+func UserLogin(user *models.User) (err error) {
+	LPassword := user.Password //记录登录的密码
+	user.Password = "idns"
+	result := db.Where("username = ?", user.UserName).First(&user)
 	if result.Error == gorm.ErrRecordNotFound {
-		return nil, ErrorUserNotExist
+		return ErrorUserNotExist
 	}
-	//查询数据库失败
-	if err != nil {
-		return nil, err
+	//判断密码
+	fmt.Println(user.Password)
+	if user.Password != encryptPassword(LPassword) {
+		return ErrorInvalidPassword
 	}
-	if user.Password != encryptPassword(password) {
-		return nil, ErrorInvalidPassword
-	}
-	return user, nil
+	return nil
 }
 
 // encryptPassword 密码加密
@@ -60,7 +61,7 @@ func encryptPassword(oPassword string) string {
 }
 
 // GetUserById 根据用户id查询数据
-func GetUserById(userID int64) (*models.User, error) {
+func GetUserById(userID int64) (user *models.User, err error) {
 	result := db.Where("user_id = ?", userID).First(&user)
-	return &user, result.Error
+	return user, result.Error
 }

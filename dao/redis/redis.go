@@ -21,6 +21,9 @@ func Init(cfg *setting.RedisConfig) (err error) {
 	})
 
 	_, err = rdb.Ping().Result()
+	if err != nil {
+		return err
+	}
 	return
 }
 

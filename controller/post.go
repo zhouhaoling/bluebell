@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreatePostHandler 创建帖子处理函数
+// CreatePostHandler 创建帖子
 func CreatePostHandler(c *gin.Context) {
 	p := new(models.Post)
 	if err := c.ShouldBindJSON(p); err != nil {
@@ -36,7 +36,7 @@ func CreatePostHandler(c *gin.Context) {
 	ResponseSuccess(c, nil)
 }
 
-// GetPostDetailHandler 获取帖子详情处理函数
+// GetPostDetailHandler 根据id查询帖子详情
 func GetPostDetailHandler(c *gin.Context) {
 	pidStr := c.Param("id")
 	pid, err := strconv.ParseInt(pidStr, 10, 64)
@@ -55,7 +55,7 @@ func GetPostDetailHandler(c *gin.Context) {
 	ResponseSuccess(c, data)
 }
 
-// GetPostListHandler 获取帖子列表的处理函数
+// GetPostListHandler 分页获取帖子列表
 func GetPostListHandler(c *gin.Context) {
 	page, size := GetPageInfo(c)
 	datas, err := logic.GetPostList(page, size)
@@ -66,4 +66,31 @@ func GetPostListHandler(c *gin.Context) {
 	}
 
 	ResponseSuccess(c, datas)
+}
+
+// GetPostListHandler2 帖子列表接口2 按创建时间或分数排序
+func GetPostListHandler2(c *gin.Context) {
+	p := &models.ParamPostList{
+		Page:  models.Page,
+		Size:  models.Size,
+		Order: models.OrderTime,
+	}
+	err := c.ShouldBindQuery(p)
+	if err != nil {
+		zap.L().Error("GetPostListHandler2 with invalid params", zap.Error(err))
+		ResponseError(c, CodeInvalidParam)
+		return
+	}
+	datas, err := logic.GetPostList2(p)
+	if err != nil {
+		zap.L().Error("logic.GetPostList2 failed", zap.Error(err))
+		ResponseError(c, CodeServerBusy)
+		return
+	}
+	ResponseSuccess(c, datas)
+}
+
+// GetCommunityPostListHandler 根据社区查询帖子列表
+func GetCommunityPostListHandler(c *gin.Context) {
+
 }

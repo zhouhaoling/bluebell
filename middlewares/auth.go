@@ -14,14 +14,14 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		// Authorization: Bearer xxx.xxx.xxx
 		authHeader := c.Request.Header.Get("Authorization")
 		if authHeader == "" {
-			controller.ResponseError(c, controller.CodeNeedLogin)
+			controller.ResponseErrorWithMsg(c, controller.CodeInvalidToken, "请求头缺少Auth Token")
 			c.Abort()
 			return
 		}
 		//按空格分隔
 		parts := strings.SplitN(authHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
-			controller.ResponseError(c, controller.CodeInvalidToken)
+			controller.ResponseErrorWithMsg(c, controller.CodeInvalidToken, "Token格式错误")
 			c.Abort()
 			return
 		}

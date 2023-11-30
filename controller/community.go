@@ -12,19 +12,19 @@ import (
 
 func CommunityHandler(c *gin.Context) {
 	//查询到所有的社区（community_id、community_name)以列表的形式返回
-	data, err := logic.GetCommunityList()
+	communityList, err := logic.GetCommunityList()
 	if err != nil {
 		zap.L().Error("logic.GetCommunityList() failed", zap.Error(err))
 		ResponseError(c, CodeServerBusy)
 		return
 	}
-	ResponseSuccess(c, data)
+	ResponseSuccess(c, communityList)
 }
 
 // CommunityDetailHandler 社区分类详情
 func CommunityDetailHandler(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
+	communityID := c.Param("id")
+	id, err := strconv.ParseInt(communityID, 10, 64)
 	if err != nil {
 		ResponseError(c, CodeInvalidParam)
 		return

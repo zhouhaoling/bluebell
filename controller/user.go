@@ -7,14 +7,15 @@ import (
 	"bluebell/pkg/jwt"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
-// LoginHandler 处理登录业务请求的函数
-func LoginHandler(c *gin.Context) {
+// UserLoginHandler 处理登录业务请求的函数
+func UserLoginHandler(c *gin.Context) {
 	var p models.ParamLogin
 	err := c.ShouldBindJSON(&p)
 	if err != nil {
@@ -28,25 +29,28 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 	//业务逻辑处理
-	token, err := logic.UserLoginLogic(&p)
+	user, err := logic.UserLogin(&p)
 	if err != nil {
-		zap.L().Error("logic.UserLoginLogic failed", zap.String("username", p.Username), zap.Error(err))
+		zap.L().Error("logic.UserLoginLogic failed", zap.String("username", p.UserName), zap.Error(err))
 		if errors.Is(err, mysql.ErrorUserNotExist) {
 			ResponseError(c, CodeUserNotExist)
 			return
-		}
-		if errors.Is(err, jwt.ErrorInvalidToken) {
-			ResponseError(c, CodeServerBusy)
 		}
 		ResponseError(c, CodeInvalidPassword)
 		return
 	}
 
-	ResponseSuccess(c, token)
+	//返回响应
+	ResponseSuccess(c, gin.H{
+		"user_id":       fmt.Sprintf("%d", user.UserID),
+		"user_name":     user.UserName,
+		"access_token":  user.AccessToken,
+		"refresh_token": user.RefreshToken,
+	})
 }
 
-// SignUpHandler 处理注册业务请求
-func SignUpHandler(c *gin.Context) {
+// UserSignUpHandler 处理注册业务请求
+func UserSignUpHandler(c *gin.Context) {
 	var p models.ParamSignUp
 	err := c.ShouldBindJSON(&p)
 	if err != nil {
@@ -59,16 +63,9 @@ func SignUpHandler(c *gin.Context) {
 		ResponseErrorWithMsg(c, CodeInvalidParam, errs.Translate(trans))
 		return
 	}
-	//手动对请求参数进行详细校验
-	//if len(p.Username) == 0 || len(p.Password) == 0 || len(p.RePassword) == 0 || p.Password != p.RePassword {
-	//	zap.L().Error("SignUp with invaild param")
-	//	c.JSON(http.StatusOK, gin.H{
-	//		"msg": "请求参数有误",
-	//	})
-	//	return
-	//}
+
 	fmt.Println(p)
-	if err = logic.UserSignUpLogic(&p); err != nil {
+	if err = logic.UserSignUp(&p); err != nil {
 		zap.L().Error("logic.UserSignUpLogic failed", zap.Error(err))
 		if errors.Is(err, mysql.ErrorUserExist) {
 			ResponseError(c, CodeUserExist)
@@ -78,4 +75,35 @@ func SignUpHandler(c *gin.Context) {
 		return
 	}
 	ResponseSuccess(c, nil)
+}
+
+// RefreshTokenHandler 刷新token
+func RefreshTokenHandler(c *gin.Context) {
+	//rt := c.Query("refresh_token")
+	rt := c.GetHeader("refresh_token") //从请求头拿取refresh_token
+	//fmt.Println("rt:", rt)
+	authHeader := c.Request.Header.Get("Authorization")
+	if authHeader == "" {
+		ResponseErrorWithMsg(c, CodeInvalidToken, "请求头缺少Auth Token")
+		c.Abort()
+		return
+	}
+
+	parts := strings.SplitN(authHeader, " ", 2)
+	if !(len(parts) == 2 && parts[0] == "Bearer") {
+		ResponseErrorWithMsg(c, CodeInvalidToken, "token格式不对")
+		c.Abort()
+		return
+	}
+	//fmt.Println("parts[1]:", parts[1])
+	aToken, rToken, err := jwt.RefreshToken(parts[1], rt)
+	if err != nil {
+		zap.L().Error("jwt.RefreshToken() failed", zap.Error(err))
+		c.Abort()
+		return
+	}
+	ResponseSuccess(c, gin.H{
+		"access_token":  aToken,
+		"refresh_token": rToken,
+	})
 }
