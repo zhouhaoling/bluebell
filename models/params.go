@@ -1,12 +1,5 @@
 package models
 
-const (
-	Page       = 1
-	Size       = 10
-	OrderTime  = "time"
-	OrderScore = "score"
-)
-
 // ParamSignUp 注册请求参数
 type ParamSignUp struct {
 	UserName   string `json:"username" binding:"required"`
@@ -28,7 +21,22 @@ type ParamVoteDate struct {
 
 // ParamPostList 获取帖子列表参数
 type ParamPostList struct {
-	Page  int64  `json:"page" form:"page"`
-	Size  int64  `json:"size" form:"size"`
-	Order string `json:"order" form:"order"`
+	Page  int64  `json:"page" form:"page"`   //页码
+	Size  int64  `json:"size" form:"size"`   //每页数量
+	Order string `json:"order" form:"order"` //排序依据,example:time
+}
+
+type ParamSearchList struct {
+	ParamPostList
+	Search string `json:"search" form:"search"` //关键字搜索
+}
+
+// ParamCommunityPostList 根据社区获取帖子参数
+type ParamCommunityPostList struct {
+	ParamPostList
+	CommunityID int64 `json:"community_id" form:"community_id"`
+}
+
+type ParamCommentList struct {
+	PostID int64 `json:"post_id" form:"post_id"`
 }

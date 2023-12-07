@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"bluebell/models"
+	"fmt"
 
 	"gorm.io/gorm/clause"
 )
@@ -36,5 +37,24 @@ func GetPostListByIDs(ids []string) ([]*models.Post, error) {
 	}).Where("post_id in ?", ids).Find(&posts)
 
 	//fmt.Println(posts[0].ID)
+	return posts, tx.Error
+}
+
+func GetPostListTotalCount(p *models.ParamSearchList) (count int64, err error) {
+	var posts []models.Post
+	search := "%" + p.Search + "%"
+	tx := db.Where("title like ? ", search).Or("content like ?", search).Find(&posts)
+	fmt.Println("tx.RowsAffected :", tx.RowsAffected)
+	return tx.RowsAffected, tx.Error
+}
+
+func GetPostListByKeywords(p *models.ParamSearchList) (posts []*models.Post, err error) {
+	posts = make([]*models.Post, 0, 2)
+	size := int(p.Size)
+	offset := int(p.Page-1) * size
+	search := "%" + p.Search + "%"
+	tx := db.Where("title like ?", search).Or("content like ?", search).
+		Order("create_time desc").
+		Limit(size).Offset(offset).Find(&posts)
 	return posts, tx.Error
 }

@@ -1,15 +1,11 @@
 package redis
 
 import (
+	"bluebell/define"
 	"math"
 	"time"
 
 	"github.com/go-redis/redis"
-)
-
-const (
-	scorePerVote     = 432 //每一票的分数
-	oneWeekInSeconds = 7 * 24 * 3600
 )
 
 // VoteForPost 投票
@@ -18,7 +14,7 @@ func VoteForPost(userID, postID string, direction float64) (err error) {
 	var dir float64
 	//1.判断投票限制
 	postTime := rdb.ZScore(getRedisKey(KeyPostTimeZSet), postID).Val()
-	if float64(time.Now().Unix())-postTime > oneWeekInSeconds {
+	if float64(time.Now().Unix())-postTime > define.OneWeekInSeconds {
 		return ErrVoteTimeExpire
 	}
 	//2.更新帖子分数
@@ -37,7 +33,7 @@ func VoteForPost(userID, postID string, direction float64) (err error) {
 
 	diff := math.Abs(uv - direction) //计算两次投票的差值
 	pipeline := rdb.TxPipeline()
-	pipeline.ZIncrBy(getRedisKey(KeyPostScoreZSet), dir*diff*scorePerVote, postID) //更新分数
+	pipeline.ZIncrBy(getRedisKey(KeyPostScoreZSet), dir*diff*define.ScorePerVote, postID) //更新分数
 
 	//记录用户为该帖子投票的数据
 	if direction == 0 {

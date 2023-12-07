@@ -28,21 +28,26 @@ func SetUpRoutes() *gin.Engine {
 	//帖子业务
 	v1.GET("/post/:id", controller.GetPostDetailHandler)
 	v1.GET("/posts", controller.GetPostListHandler)
-	v1.GET("/posts2", controller.GetPostListHandler2)
+	v1.GET("/posts/order", controller.GetPostListHandler2)
+	v1.GET("/posts/search", controller.PostSearchHandler) //帖子搜索
 
 	//社区业务
 	v1.GET("/community", controller.CommunityHandler)
-	v1.GET("community/:id", controller.CommunityDetailHandler)
+	v1.GET("/community/:id", controller.CommunityDetailHandler)
+	v1.GET("/community/order", controller.GetCommunityPostListHandler) //根据社区id
 	//Github热榜
-
+	//...........待完成
+	//评论列表
+	v1.GET("/comment/list", controller.CommentListHandler)
 	//中间件
 	v1.Use(middlewares.JWTAuthMiddleware())
 	{
 		//创建帖子
 		v1.POST("/post/create", controller.CreatePostHandler)
-
 		//投票功能
 		v1.POST("/vote", controller.PostVoteHandler)
+		//创建评论
+		v1.POST("/comment", controller.CommentHandler)
 
 		v1.GET("/ping", func(c *gin.Context) {
 			c.String(http.StatusOK, "ok")

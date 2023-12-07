@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"bluebell/define"
 	"bluebell/models"
 	"crypto/md5"
 	"encoding/hex"
@@ -11,8 +12,6 @@ import (
 )
 
 var user models.User
-
-const secret = "lonlyyahh.com"
 
 // InsertUser 向数据库中创建一条用户记录
 func InsertUser(user *models.User) (err error) {
@@ -56,12 +55,12 @@ func UserLogin(user *models.User) (err error) {
 // encryptPassword 密码加密
 func encryptPassword(oPassword string) string {
 	h := md5.New()
-	h.Write([]byte(secret))
+	h.Write([]byte(define.Secret))
 	return hex.EncodeToString(h.Sum([]byte(oPassword)))
 }
 
-// GetUserById 根据用户id查询数据
-func GetUserById(userID int64) (user *models.User, err error) {
+// GetUserByID 根据用户id查询数据
+func GetUserByID(userID int64) (user *models.User, err error) {
 	result := db.Where("user_id = ?", userID).First(&user)
 	return user, result.Error
 }

@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"bluebell/define"
 	"bluebell/logic"
 	"bluebell/models"
+	"fmt"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -71,9 +73,9 @@ func GetPostListHandler(c *gin.Context) {
 // GetPostListHandler2 帖子列表接口2 按创建时间或分数排序
 func GetPostListHandler2(c *gin.Context) {
 	p := &models.ParamPostList{
-		Page:  models.Page,
-		Size:  models.Size,
-		Order: models.OrderTime,
+		Page:  define.Page,
+		Size:  define.Size,
+		Order: define.OrderTime,
 	}
 	err := c.ShouldBindQuery(p)
 	if err != nil {
@@ -92,5 +94,41 @@ func GetPostListHandler2(c *gin.Context) {
 
 // GetCommunityPostListHandler 根据社区查询帖子列表
 func GetCommunityPostListHandler(c *gin.Context) {
+	p := &models.ParamCommunityPostList{
+		ParamPostList: models.ParamPostList{
+			Page:  define.Page,
+			Size:  define.Size,
+			Order: define.OrderTime,
+		},
+	}
+	err := c.ShouldBindQuery(p)
+	if err != nil {
+		zap.L().Error("GetCommunityPostListHandler with invalid params", zap.Error(err))
+		ResponseError(c, CodeInvalidParam)
+		return
+	}
+	datas, err := logic.GetCommunityPostList(p)
+	if err != nil {
+		zap.L().Error("logic.GetCommunityPostList failed", zap.Error(err))
+		ResponseError(c, CodeServerBusy)
+		return
+	}
+	ResponseSuccess(c, datas)
+}
 
+func PostSearchHandler(c *gin.Context) {
+	p := &models.ParamSearchList{}
+	if err := c.ShouldBindQuery(p); err != nil {
+		zap.L().Error("ParamSearchList with invalid params", zap.Error(err))
+		ResponseError(c, CodeInvalidParam)
+		return
+	}
+	fmt.Println("Search", p.Search)
+	fmt.Println("Order", p.Order)
+	data, err := logic.PostSearch(p)
+	if err != nil {
+		ResponseError(c, CodeServerBusy)
+		return
+	}
+	ResponseSuccess(c, data)
 }

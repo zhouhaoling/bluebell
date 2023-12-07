@@ -1,19 +1,18 @@
 package controller
 
 import (
+	"bluebell/define"
 	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-const CtxUserIDKey = "userID"
-
 var ErrorUserNotLogin = errors.New("用户未登录")
 
 // getCurrentUser 获取当前登录的用户ID
 func getCurrentUserID(c *gin.Context) (userID int64, err error) {
-	uid, ok := c.Get(CtxUserIDKey)
+	uid, ok := c.Get(define.CtxUserIDKey)
 	if !ok {
 		err = ErrorUserNotLogin
 		return
